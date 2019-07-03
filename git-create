@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
 usage() {
     echo "usage: git create [-l <license>] [-r <remote_url>] [-f | --force]"
@@ -26,6 +26,7 @@ license() {
 		return 0;
 	fi
 	echo "Available Licenses:"
+	
 	a=()
 	for f in ${workingdir}/templates/*; do
 		desc=$(head -n 1 "$f");
