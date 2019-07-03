@@ -1,0 +1,116 @@
+#!/usr/bin/env sh
+
+usage() {
+    echo "usage: git create [-l <license>] [-r <remote_url>] [-f | --force]"
+    echo "If license is not found and not specified, it will be prompted for."
+    echo "If license already exists, use -f to overwrite with a new one."
+}
+
+version() {
+    echo "git create plugin v0.1.0"
+    echo
+}
+
+license() {
+	if [ -f "LICENSE.md" ] && [ "$1" != 1 ]; then
+		echo "License file already exists, skipping. Use -f to override."
+		return 0;
+	fi
+	local workingdir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
+	if [ ! -z $2 ] && [ -f "${workingdir}/templates/$2" ]; then
+		cp "${workingdir}/templates/$2" "LICENSE.md"
+		echo "Created $2 License..."
+		if [ "$new" == 1 ]; then
+			readme "$2"
+		fi
+		return 0;
+	fi
+	echo "Available Licenses:"
+	a=()
+	for f in ${workingdir}/templates/*; do
+		desc=$(head -n 1 "$f");
+		# remove leading whitespace characters
+	   desc="${desc#"${desc%%[![:space:]]*}"}"
+	   # remove trailing whitespace characters
+	   desc="${desc%"${desc##*[![:space:]]}"}"
+	   if [ ! -z "$desc" ] && [ $(basename $f) != "readme" ]; then
+			a[${#a[@]}]="$f";
+			echo "[${#a[@]}] $(basename $f)	$desc";
+		fi
+	done
+	read -p "License (leave empty to skip):" lic;
+	if [ ! -z "$lic" ]; then
+		cp "${a[$lic-1]}" "LICENSE"
+		echo "Created $(basename ${a[$lic-1]}) License..."
+		if [ "$new" == 1 ]; then
+			readme "$(basename ${a[$lic-1]})"
+		fi
+	else
+		echo "No license created." 
+	fi
+}
+
+readme() {
+	sed -i -e 's/{license}/'"$1"'/g' README.md
+}
+
+
+main() {
+ 	# Check parameters
+	while (( "$#" )); do
+		case $1 in
+			"-h"|"--help")
+				usage; exit 0
+				;;
+			"-v"|"--version")
+				version; exit 0
+				;;
+			"-l"|"--license")
+				shift
+				(( "$#" )) && lf="$1"
+				;;
+			"-r"|"--remote")
+				shift
+				(( "$#" )) && remote="$1"
+				;;
+			"-f"|"--force")
+				shift
+				force=true
+				;;
+		esac
+		shift
+   done
+	# if we are here, intialize
+	if [ ! -d ".git" ]; then
+		echo "Initializing git repository...";
+		eval "git init";
+	else
+		echo "Already a git directory. Creating files...";
+	fi
+	if [ ! -z $remote ]; then
+		echo "Adding remote origin $remote"
+		eval "git remote add origin $remote"
+	fi
+	# Add readme.md
+	if [ -f "README.md" ]; then
+		echo "Readme file already exists, skipping."
+		new=0
+	else
+		echo "Creating readme file..."
+		local workingdir=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
+		cp "${workingdir}/templates/readme" "README.md"
+		new=1
+	fi
+	# now add license 
+   if [ ! -z $lf ] && [ ! -z $force]; then
+   	license "0 $lf";
+   elif [ ! -z $lf ]; then
+   	license "1 $lf";
+   elif [ ! -z $force ]; then
+   	license "1";
+   else
+   	license;
+   fi
+}
+
+main "$@"
