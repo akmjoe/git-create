@@ -75,7 +75,6 @@ main() {
 				(( "$#" )) && remote="$1"
 				;;
 			"-f"|"--force")
-				shift
 				force=true
 				;;
 		esac
@@ -104,9 +103,9 @@ main() {
 	fi
 	# now add license 
    if [ ! -z $lf ] && [ ! -z $force]; then
-   	license "0 $lf";
+   	license "0" "$lf";
    elif [ ! -z $lf ]; then
-   	license "1 $lf";
+   	license "1" "$lf";
    elif [ ! -z $force ]; then
    	license "1";
    else
