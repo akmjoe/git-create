@@ -90,6 +90,12 @@ main() {
 	if [ ! -z $remote ]; then
 		echo "Adding remote origin $remote"
 		eval "git remote add origin $remote"
+    else
+        read -p "Enter github user to add remote url (blank to skip):" remote;
+        if [ ! -z "$remote" ]; then
+            echo "Adding remote origin git@github.com:$remote/$(basename `pwd`).git"
+		    eval "git remote add origin git@github.com:$remote/$(basename `pwd`).git"
+        fi
 	fi
 	# Add readme.md
 	if [ -f "README.md" ]; then
